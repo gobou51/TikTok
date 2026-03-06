@@ -150,6 +150,7 @@
                 const imgUrl = item.pictureUrl || "https://via.placeholder.com/32";
                 
                 // 自分の投稿なら削除ボタンを表示
+                console.log("シートのID:", item.userId, "自分のID:", profile.userId);
                 const isMyPost = (item.userId === profile.userId);
                 const deleteBtn = isMyPost 
                     ? `<button class="btn-del" onclick="deletePost(${item.no})">削除</button>` 

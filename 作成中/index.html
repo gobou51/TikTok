@@ -6,163 +6,191 @@
     <title>LINE連携メッセージ板</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        :root { --primary: #06c755; --bg: #f0f2f5; } /* LINEカラー */
-        body { font-family: sans-serif; background-color: var(--bg); margin: 0; padding: 20px; }
+        :root { --line-green: #06c755; --bg: #f0f2f5; }
+        body { font-family: sans-serif; background-color: var(--bg); margin: 0; padding: 15px; }
         .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         
-        /* ユーザー情報表示 */
-        .user-info { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; background: #f9f9f9; padding: 10px; border-radius: 8px; }
-        .user-info img { width: 40px; height: 40px; border-radius: 50%; }
-        
-        .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; font-size: 0.8em; color: #666; margin-bottom: 5px; }
-        .input-group input, .input-group textarea { width: 100%; padding: 12px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
-        
-        .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
-        .btn-submit { background-color: var(--primary); color: white; }
-        .btn-refresh { background-color: #eee; color: #333; width: auto; }
-        .btn:disabled { background-color: #ccc; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h1 { font-size: 20px; margin: 0; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border-bottom: 1px solid #eee; padding: 12px; text-align: left; }
-        th { color: #888; font-size: 0.8em; }
+        /* ログイン・ユーザーエリア */
+        .user-panel { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; padding: 10px 15px; border-radius: 8px; margin-bottom: 20px; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-info img { width: 35px; height: 35px; border-radius: 50%; background: #ccc; }
         
-        #loaderOverlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.9); z-index: 999; align-items: center; justify-content: center; flex-direction: column;
-        }
-        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        .btn-logout { background: #e0e0e0; color: #666; }
+        .btn-login { background: var(--line-green); color: white; margin-top: 10px; }
+        .btn-submit { background: var(--line-green); color: white; width: 100%; padding: 12px; margin-top: 10px; }
+        .btn-refresh { background: transparent; color: var(--line-green); border: 1px solid var(--line-green); }
+
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 0.8em; color: #888; margin-bottom: 4px; }
+        .input-group input, .input-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+
+        /* テーブルスタイル */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border-bottom: 1px solid #f0f0f0; padding: 12px 8px; text-align: left; vertical-align: middle; }
+        th { color: #999; font-size: 0.75em; }
+        
+        /* 一覧のアイコン */
+        .list-user { display: flex; align-items: center; gap: 8px; }
+        .list-icon { width: 30px; height: 30px; border-radius: 50%; background: #eee; object-fit: cover; }
+
+        #errorArea { display: none; text-align: center; padding: 30px; background: white; border-radius: 12px; }
+
+        /* ロード表示 */
+        #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 1000; align-items: center; justify-content: center; flex-direction: column; }
+        .spinner { width: 30px; height: 30px; border: 3px solid #f3f3f3; border-top: 3px solid var(--line-green); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div id="loaderOverlay">
-    <div class="spinner"></div>
-    <p>通信中...</p>
-</div>
+<div id="loader"><div class="spinner"></div><p>通信中...</p></div>
 
-<div class="container">
+<div id="mainContent" class="container" style="display:none;">
     <div class="header">
         <h1>メッセージ板</h1>
         <button class="btn btn-refresh" onclick="updateData()">更新</button>
     </div>
 
-    <div id="userInfo" class="user-info" style="display:none;">
-        <img id="userImg" src="" alt="">
-        <span id="userNameDisplay">読み込み中...</span>
+    <div class="user-panel">
+        <div class="user-info">
+            <img id="myPic" src="" alt="">
+            <span id="myName">読み込み中...</span>
+        </div>
+        <button class="btn btn-logout" onclick="logout()">ログアウト</button>
     </div>
 
     <div class="input-area">
         <div class="input-group">
-            <label>表示名（LINEから自動取得）</label>
-            <input type="text" id="userName" readonly>
+            <label>メッセージ</label>
+            <textarea id="userMsg" rows="3" placeholder="入力してください"></textarea>
         </div>
-        <div class="input-group">
-            <label>メッセージ内容</label>
-            <textarea id="userMsg" rows="3" placeholder="ここに内容を入力"></textarea>
-        </div>
-        <button id="submitBtn" class="btn btn-submit" onclick="sendMessage()">送信する</button>
+        <button id="submitBtn" class="btn btn-submit" onclick="sendMessage()">送信</button>
     </div>
 
-    <table id="messageTable">
+    <table>
         <thead>
-            <tr><th style="width:40px;">No</th><th style="width:120px;">日時</th><th>名前</th><th>内容</th></tr>
+            <tr><th style="width:30px;">No</th><th>投稿者</th><th>内容</th></tr>
         </thead>
         <tbody id="tableBody"></tbody>
     </table>
 </div>
 
+<div id="errorArea">
+    <p id="errorMsg">ログインが必要です</p>
+    <button class="btn btn-login" onclick="liff.login()">LINEでログインする</button>
+</div>
+
 <script>
-    // --- 設定項目 ---
-    const LIFF_ID = "2009341708-W8qs1Drd"; 
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwP7G69BFCZK_W0JIo4W0a3oPDvh0lG2aoQ6rCao2dbj2lzTU7Z24w_1FYuBk42ees6/exec";
-    // ----------------
+    const LIFF_ID = "2009341708-W8qs1Drd"; // 書き換えてください
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwP7G69BFCZK_W0JIo4W0a3oPDvh0lG2aoQ6rCao2dbj2lzTU7Z24w_1FYuBk42ees6/exec"; // 書き換えてください
 
-    let userData = { userId: "", name: "", pictureUrl: "" };
+    let profile = { userId: "", name: "", pictureUrl: "" };
 
-    async function initLiff() {
-        toggleLoader(true);
+    async function init() {
+        showLoader(true);
         try {
             await liff.init({ liffId: LIFF_ID });
             if (!liff.isLoggedIn()) {
-                liff.login();
+                showError("サービスを利用するにはログインが必要です。");
             } else {
-                const profile = await liff.getProfile();
-                userData.userId = profile.userId;
-                userData.name = profile.displayName;
-                userData.pictureUrl = profile.pictureUrl;
-
-                // 画面表示に反映
-                document.getElementById('userInfo').style.display = 'flex';
-                document.getElementById('userImg').src = userData.pictureUrl || "https://via.placeholder.com/40";
-                document.getElementById('userNameDisplay').innerText = userData.name + " さんとしてログイン中";
-                document.getElementById('userName').value = userData.name;
-
+                const p = await liff.getProfile();
+                profile = { userId: p.userId, name: p.displayName, pictureUrl: p.pictureUrl };
+                
+                document.getElementById('myPic').src = profile.pictureUrl || "";
+                document.getElementById('myName').innerText = profile.name;
+                
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('errorArea').style.display = 'none';
                 await updateData();
             }
         } catch (err) {
-            console.error(err);
-            alert("LINEログインに失敗しました");
+            showError("初期化に失敗しました: " + err);
         } finally {
-            toggleLoader(false);
+            showLoader(false);
         }
     }
 
-    function toggleLoader(show) {
-        document.getElementById('loaderOverlay').style.display = show ? 'flex' : 'none';
+    function showError(msg) {
+        document.getElementById('mainContent').style.display = 'none';
+        document.getElementById('errorArea').style.display = 'block';
+        document.getElementById('errorMsg').innerText = msg;
+    }
+
+    function showLoader(show) {
+        document.getElementById('loader').style.display = show ? 'flex' : 'none';
     }
 
     async function updateData() {
-        toggleLoader(true);
+        showLoader(true);
         try {
-            const response = await fetch(GAS_URL);
-            const data = await response.json();
-            const tableBody = document.getElementById('tableBody');
-            tableBody.innerHTML = "";
+            const res = await fetch(GAS_URL);
+            const data = await res.json();
+            const body = document.getElementById('tableBody');
+            body.innerHTML = "";
             data.slice().reverse().forEach(item => {
+                // 画像がない場合はデフォルトのグレー画像
+                const imgTag = item.pictureUrl 
+                    ? `<img src="${item.pictureUrl}" class="list-icon">` 
+                    : `<div class="list-icon" style="background:#ddd;"></div>`;
+
                 const row = `<tr>
-                    <td>${item.no}</td>
-                    <td style="font-size:0.7em; color: #999;">${item.timestamp}</td>
-                    <td>${item.name}</td>
-                    <td>${item.message.replace(/\n/g, '<br>')}</td>
+                    <td style="color:#ccc; font-size:10px;">${item.no}</td>
+                    <td>
+                        <div class="list-user">
+                            ${imgTag}
+                            <div>
+                                <div style="font-size:14px;">${item.name}</div>
+                                <div style="font-size:9px; color:#aaa;">${item.timestamp}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="font-size:14px;">${item.message.replace(/\n/g, '<br>')}</td>
                 </tr>`;
-                tableBody.insertAdjacentHTML('beforeend', row);
+                body.insertAdjacentHTML('beforeend', row);
             });
         } catch (e) {
-            alert("データ取得エラー");
+            console.error(e);
         } finally {
-            toggleLoader(false);
+            showLoader(false);
         }
     }
 
     async function sendMessage() {
         const msg = document.getElementById('userMsg').value.trim();
-        if (!msg) return alert("メッセージを入力してください");
+        if (!msg) return;
 
-        toggleLoader(true);
+        showLoader(true);
         try {
             await fetch(GAS_URL, {
                 method: "POST",
                 mode: "no-cors",
                 body: JSON.stringify({
-                    name: userData.name,
-                    userId: userData.userId,
-                    pictureUrl: userData.pictureUrl,
+                    name: profile.name,
+                    userId: profile.userId,
+                    pictureUrl: profile.pictureUrl,
                     message: msg
                 })
             });
-
             document.getElementById('userMsg').value = "";
             setTimeout(updateData, 1500);
         } catch (e) {
             alert("送信失敗");
-            toggleLoader(false);
+            showLoader(false);
         }
     }
 
-    window.onload = initLiff;
+    function logout() {
+        if (liff.isLoggedIn()) {
+            liff.logout();
+            window.location.reload();
+        }
+    }
+
+    window.onload = init;
 </script>
 </body>
 </html>

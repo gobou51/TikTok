@@ -35,7 +35,18 @@
 
         .input-group { margin-bottom: 15px; }
         .input-group label { display: block; font-size: 0.8em; color: #888; margin-bottom: 4px; }
-        .input-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; resize: vertical; }
+        
+        /* メッセージボックス：縦のみサイズ変更可能 */
+        .input-group textarea { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            resize: vertical; /* 縦のみ変更可能に設定 */
+            min-height: 80px;
+        }
 
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border-bottom: 1px solid #f0f0f0; padding: 12px 8px; text-align: left; vertical-align: middle; font-weight: normal; }
@@ -171,6 +182,7 @@
 
         showLoader(true);
         try {
+            // pictureUrlもJSONに含めて送信
             await fetch(GAS_URL, {
                 method: "POST",
                 mode: "no-cors",

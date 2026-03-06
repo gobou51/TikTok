@@ -44,7 +44,7 @@
             border-radius: 8px; 
             box-sizing: border-box; 
             font-size: 16px; 
-            resize: vertical; /* 縦のみ変更可能に設定 */
+            resize: vertical; 
             min-height: 80px;
         }
 
@@ -105,6 +105,7 @@
 </div>
 
 <script>
+    // 設定
     const LIFF_ID = "2009341708-W8qs1Drd"; 
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzkAj0MEQbBK96JOKIa7QmXgNFgiOOvyAoP0iArw7MaoKP0BpiV4zbxHbDu68D7iP8Tdw/exec"; 
 
@@ -128,7 +129,7 @@
                 await updateData();
             }
         } catch (err) {
-            showError("LIFFの初期化に失敗しました。設定を確認してください。");
+            showError("LIFFの初期化に失敗しました。");
         } finally {
             showLoader(false);
         }
@@ -182,7 +183,6 @@
 
         showLoader(true);
         try {
-            // pictureUrlもJSONに含めて送信
             await fetch(GAS_URL, {
                 method: "POST",
                 mode: "no-cors",

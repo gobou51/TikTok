@@ -14,14 +14,8 @@
         h1 { font-size: 18px; margin: 0; color: #333; }
 
         .user-panel { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            background: #f8f9fa; 
-            padding: 10px 15px; 
-            border-radius: 8px; 
-            margin-bottom: 20px;
-            border: 1px solid #eee;
+            display: flex; justify-content: space-between; align-items: center; 
+            background: #f8f9fa; padding: 10px 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #eee;
         }
         .user-info { display: flex; align-items: center; gap: 10px; }
         .user-info img { width: 35px; height: 35px; border-radius: 50%; background: #ccc; object-fit: cover; }
@@ -33,23 +27,20 @@
         .btn-submit { background: var(--line-green); color: white; width: 100%; padding: 12px; margin-top: 10px; font-size: 16px; }
         .btn-refresh { background: white; color: var(--line-green); border: 1px solid var(--line-green); }
 
+        /* 削除ボタン */
+        .btn-del {
+            background: #ff4d4d; color: white; border: none; border-radius: 4px;
+            font-size: 10px; padding: 2px 6px; margin-left: 8px; cursor: pointer; vertical-align: middle;
+        }
+        .btn-del:hover { background: #cc0000; }
+
         .input-group { margin-bottom: 15px; }
         .input-group label { display: block; font-size: 0.8em; color: #888; margin-bottom: 4px; }
         
-        /* メッセージボックス：横幅を完全に固定し、縦のみサイズ変更可能 */
         .input-group textarea { 
-            width: 100%; 
-            max-width: 100%;
-            min-width: 100%;
-            padding: 10px; 
-            border: 1px solid #ddd; 
-            border-radius: 8px; 
-            box-sizing: border-box; 
-            font-size: 16px; 
-            resize: vertical; 
-            min-height: 80px;
-            display: block;
-            overflow: auto;
+            width: 100%; max-width: 100%; min-width: 100%;
+            padding: 10px; border: 1px solid #ddd; border-radius: 8px; 
+            box-sizing: border-box; font-size: 16px; resize: vertical; min-height: 80px; display: block;
         }
 
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
@@ -63,7 +54,6 @@
         .list-msg { font-size: 14px; line-height: 1.5; color: #444; }
 
         #errorArea { display: none; text-align: center; padding: 50px 20px; background: white; border-radius: 12px; }
-
         #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 1000; align-items: center; justify-content: center; flex-direction: column; }
         .spinner { width: 30px; height: 30px; border: 3px solid #f3f3f3; border-top: 3px solid var(--line-green); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -158,13 +148,20 @@
             
             data.slice().reverse().forEach(item => {
                 const imgUrl = item.pictureUrl || "https://via.placeholder.com/32";
+                
+                // 自分の投稿なら削除ボタンを表示
+                const isMyPost = (item.userId === profile.userId);
+                const deleteBtn = isMyPost 
+                    ? `<button class="btn-del" onclick="deletePost(${item.no})">削除</button>` 
+                    : "";
+
                 const row = `<tr>
                     <td style="color:#ccc; font-size:10px;">${item.no}</td>
                     <td>
                         <div class="list-user">
                             <img src="${imgUrl}" class="list-icon">
                             <div>
-                                <div class="list-name">${item.name}</div>
+                                <div class="list-name">${item.name}${deleteBtn}</div>
                                 <div class="list-time">${item.timestamp}</div>
                             </div>
                         </div>
@@ -200,6 +197,28 @@
             setTimeout(updateData, 1500);
         } catch (e) {
             alert("送信に失敗しました");
+            showLoader(false);
+        }
+    }
+
+    async function deletePost(no) {
+        if (!confirm("この投稿を削除（非表示）にしますか？")) return;
+        
+        showLoader(true);
+        try {
+            await fetch(GAS_URL, {
+                method: "POST",
+                mode: "no-cors",
+                body: JSON.stringify({
+                    action: "delete",
+                    no: no,
+                    userId: profile.userId
+                })
+            });
+            // 処理待ち
+            setTimeout(updateData, 1000);
+        } catch (e) {
+            alert("削除に失敗しました");
             showLoader(false);
         }
     }

@@ -36,9 +36,11 @@
         .input-group { margin-bottom: 15px; }
         .input-group label { display: block; font-size: 0.8em; color: #888; margin-bottom: 4px; }
         
-        /* メッセージボックス：縦のみサイズ変更可能 */
+        /* メッセージボックス：横幅を完全に固定し、縦のみサイズ変更可能 */
         .input-group textarea { 
             width: 100%; 
+            max-width: 100%;
+            min-width: 100%;
             padding: 10px; 
             border: 1px solid #ddd; 
             border-radius: 8px; 
@@ -46,6 +48,7 @@
             font-size: 16px; 
             resize: vertical; 
             min-height: 80px;
+            display: block;
         }
 
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
@@ -105,7 +108,6 @@
 </div>
 
 <script>
-    // 設定
     const LIFF_ID = "2009341708-W8qs1Drd"; 
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzkAj0MEQbBK96JOKIa7QmXgNFgiOOvyAoP0iArw7MaoKP0BpiV4zbxHbDu68D7iP8Tdw/exec"; 
 
